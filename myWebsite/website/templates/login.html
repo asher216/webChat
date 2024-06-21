@@ -1,0 +1,21 @@
+{% extends "base.html" %} {% block title %}Login{% endblock %} {% block content
+%}
+<div style="margin-left: 25%; padding: 1px 16px; ">
+    <form method="POST" name="login">
+        <h3 align="center">Login</h3>
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" style="width: 50%;" />
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" class="form-control" id="password" name="password" placeholder="Enter Password" style="width: 50%;"/>
+        </div>
+        <div class="form-group">
+            <a href="{{ url_for('auth.forgot_password') }}">Forgot Password?</a>
+        </div>
+        <br />
+        <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+</div>
+{% endblock %}

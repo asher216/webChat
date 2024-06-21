@@ -1,0 +1,74 @@
+.main-container {
+    margin-left: 25%;
+    background-color: #222831;
+}
+
+.header {
+    background-color: #0000002b;
+    padding-left: 20px;
+    padding-bottom: 8px;
+}
+
+.message-list {
+    padding: 1px 16px;
+    height: 450px;
+    overflow: auto;
+    display: block;
+    background-color: #29323A;
+    color: white;
+}
+
+.message-item {
+    background-color: #33373B;
+    border-radius: 10px;
+    margin-bottom: 3px;
+    width: fit-content;
+    max-width: 70%;
+    max-height: 300px;
+}
+
+.left {
+    float: left;
+    clear: both;
+}
+
+.right {
+    float: right;
+    clear: both;
+}
+
+.media-container {
+    width: 300px;
+    max-height: 260px;
+    overflow: hidden;
+}
+
+.timestamp {
+    float: right;
+    font-size: small;
+}
+
+.message-form {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 10px;
+}
+
+.message-input {
+    resize: none;
+    height: auto;
+    min-height: 3rem;
+    padding: 5px;
+    color: white;
+    background-color: black;
+    flex: 1;
+    max-height: 8rem;
+}
+
+.button-group {
+    display: flex;
+    height: 48px;
+}
+
+/* Include other styles from original inline styling converted to CSS classes */

@@ -1,0 +1,19 @@
+{% extends "base.html" %} {% block title %}Add new contact{% endblock %}
+
+{% block content %}
+<div style="margin-left:25%;padding:1px 16px;height:1000px;">
+<form method="POST">
+    <h3 align="center">Add New contact</h3>
+    <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" class="form-control" id="email" name="email" placeholder="Enter contact email" />
+    </div>
+    <div>
+        <label for="name">Name</label>
+        <input type="name" class="form-control" id="name" name="name" placeholder="Enter Name" />
+    </div>
+    <br />
+    <button type="submit" class="btn btn-primary">Add User</button>
+</form>
+</div>
+{% endblock %}

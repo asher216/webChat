@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+		integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous" />
+	<style>
+		body {
+			margin: 0;
+		}
+
+		ul.navBar {
+			list-style-type: none;
+			margin: 0;
+			padding: 0;
+			width: 25%;
+			background-color: #29323A;;
+			position: fixed;
+			height: 100%;
+			overflow: auto;
+		}
+
+		li.navig-bar a {
+			display: block inline;
+			color: #ECEFF1;
+			padding: 8px 16px;
+			text-decoration: none;
+		}
+
+		li.navig-bar a.active {
+			background-color: #53777A;
+			color: white;
+		}
+
+		li.navig-bar a:hover:not(.active) {
+			background-color: #53777a88;
+			color: white;
+		}
+
+		.alert-danger{
+			position: fixed;
+			bottom: 20px; /* Adjust as needed */
+			right: 20px; /* Adjust as needed */
+			z-index: 1000; /* Ensure alerts appear above other content */
+			margin: 0;
+			width: 300px; /* Set a fixed width or adjust as needed */
+    		border-radius: 5px;
+			color:white;
+			background-color:#C02942;
+		}
+
+		.alert-success{
+			position: fixed;
+			bottom: 20px; /* Adjust as needed */
+			right: 20px; /* Adjust as needed */
+			z-index: 1000; /* Ensure alerts appear above other content */
+			margin: 0;
+			width: 300px; /* Set a fixed width or adjust as needed */
+    		border-radius: 5px;
+			background-color: #38B2AC;
+		}
+
+		.username:hover .username{
+			overflow: visible;
+		}
+
+		.enlarge-overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(0,
+					0,
+					0,
+					0.5);
+			/* Semi-transparent black background */
+			display: none;
+			/* Initially hidden */
+			justify-content: center;
+			align-items: center;
+		}
+
+		.enlarged-element {
+			max-width: 80%;
+			/* Adjust max-width as needed */
+			max-height: 80%;
+			/* Adjust max-height as needed */
+			margin: auto;
+		}
+
+		::-webkit-scrollbar {
+			width: 12px;
+			
+		}
+
+		::-webkit-scrollbar-track {
+			background: #29323A;
+			/* Set track background color */
+		}
+
+		::-webkit-scrollbar-thumb {
+			background: #454A4D;
+			/* Set thumb color */
+			border-radius: 6px;
+			/* Make rounded corners */
+		}
+
+		::-webkit-scrollbar-thumb:hover {
+			background: #606060;
+		}
+	</style>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="icon" href="/static/ai.png">
+	
+
+	<title>{% block title %}Home{% endblock %}</title>
+</head>
+
+<body style="background-color: #222831; color: #ECEFF1; overflow: auto">
+	<ul class="navBar">
+		{% if user.is_authenticated %}
+		<li class="navig-bar">
+			<p class="nav-item nav-link d-flex " 
+				style="background-color: #33373B; display: flex; height: 80px; font-size: 30px;">
+				<span id="username" title="{{ user.first_name }}" style="flex: 4; align-items: center; justify-content: center; font-size: 130%; padding-left:4%; background-color: #454A4D; color: white; border-radius: 10px; max-width:140px; overflow:hidden; z-index:3; white-space: nowrap; text-overflow: ellipsis;">{{ user.first_name }}</span>
+				<a class="nav-item nav-link" id="AddContact" href="/add-contact"
+					style="justify-self: flex-end; align-items: center; justify-content: center; margin-left: 10px;">
+					<img src="/static/addNew.png" style="height: 30px; width: auto; " />
+				</a>
+
+				<a class="nav-item nav-link" id="logout" href="/logout"
+					style="justify-self: flex-end; align-items: center; justify-content: center; margin-left: 10px;">
+					<img src="/static/logOut.png" style="width: auto; height: 30px; " />
+				</a>
+
+				
+			</p>
+
+			{% for contact in user.contacts %}
+			<form method="POST">
+				{% if to_contact is defined %} {% if contact.contact_id == to_contact.contact_id %}
+				<a class="nav-item nav-link" id="contact" style="background-color: #53777A;"
+					href="/send-msg/{{ contact.contact_id }}">{{ contact.name }}</a>
+				{% else %}
+				<a class="nav-item nav-link" id="contact" href="/send-msg/{{ contact.contact_id }}">{{ contact.name
+					}}</a>
+				{% endif %} {% else %}
+				<a class="nav-item nav-link" id="contact" href="/send-msg/{{ contact.contact_id }}">{{ contact.name
+					}}</a>
+				{% endif %} {% endfor %}
+			</form>
+
+		</li>
+
+		{% else %}
+		<li class="navig-bar">
+			<a class="nav-item nav-link" id="login" href="/login">Login</a>
+			<a class="nav-item nav-link" id="signUp" href="/sign-up">Sign Up</a>
+		</li>
+		{% endif %}
+	</ul>
+
+	{% with messages = get_flashed_messages(with_categories=true) %} {% if
+	messages %} {% for category, message in messages %} {% if category ==
+	'error' %}
+
+	<div class="alert alert-danger alter-dismissable fade show" role="alert" >
+		{{ message }}
+		<button type="button" class="close" data-dismiss="alert">
+		</button>
+	</div>
+	{% else %}
+	<div class="alert alert-success alter-dismissable fade show" role="alert" >
+		{{ message }}
+		<button type="button" class="close" data-dismiss="alert">
+		</button>
+	</div>
+	{% endif %} {% endfor %} {% endif %} {% endwith %}
+
+	<div class="container">{% block content %} {% endblock %}</div>
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+		integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+		crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+		integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+		crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+		integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+		crossorigin="anonymous"></script>
+
+	{% block javascript %}
+	<script type="text/javascript">
+
+
+		$(document).ready(function() {
+			setTimeout(function() {
+				$(".alert").alert('close');
+			}, 3000);
+		});
+	</script>
+	{% endblock %}
+</body>
+
+</html>

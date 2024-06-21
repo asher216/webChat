@@ -1,0 +1,91 @@
+{% extends "base.html" %} {% block title %}Sign Up{% endblock %}
+
+{% block content %}
+<div style="margin-left:25%;padding:1px 16px;height:1000px;">
+<form id="signup-form" method="POST" onsubmit="return validateForm()">
+  <h3>Sign Up</h3>
+  <div class="form-group">
+    <label for="email">Email Address</label>
+    <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" />
+    <span id="email-error" class="text-danger"></span> </div>
+  <div class="form-group">
+    <label for="firstName">First Name</label>
+    <input type="text" class="form-control" id="firstName" name="firstName" placeholder="Enter First Name" />
+    <span id="firstname-error" class="text-danger"></span> </div>
+  <div class="form-group">
+    <label for="password1">Password</label>
+    <input type="password" class="form-control" id="password1" name="password1" placeholder="Enter Password" />
+    <span id="password1-error" class="text-danger"></span> </div>
+  <div class="form-group">
+    <label for="password2">Password (confirm)</label>
+    <input type="password" class="form-control" id="password2" name="password2" placeholder="re-enter Password" />
+    <span id="password2-error" class="text-danger"></span> </div>
+  <br />
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+<script>
+  function validateForm() {
+  // Loop through each field and its corresponding error message span
+  const fields = [
+    { field: document.getElementById("email"), errorSpan: document.getElementById("email-error") },
+    { field: document.getElementById("firstName"), errorSpan: document.getElementById("firstname-error") },
+    { field: document.getElementById("password1"), errorSpan: document.getElementById("password1-error") },
+    { field: document.getElementById("password2"), errorSpan: document.getElementById("password2-error") },
+  ];
+
+  for (const fieldObj of fields) {
+    const field = fieldObj.field;
+    const errorSpan = fieldObj.errorSpan;
+
+    // Clear any previous error message
+    errorSpan.innerHTML = "";
+
+    // Validate the current field
+    if (!validateField(field, errorSpan)) {
+      // Validation failed, display error and return false (prevent submission)
+      return false;
+    }
+  }
+
+  // If all fields pass validation, return true (or handle success here)
+  return true;
+}
+
+function validateField(field, errorSpan) {
+  const value = field.value;
+
+  // Field-specific validation logic (similar to previous code)
+  switch (field.id) {
+    case "email":
+      if (!value || value.indexOf("@") === -1 || value.indexOf(".") === -1) {
+        errorSpan.innerHTML = "Invalid email format";
+        return false;
+      }
+      break;
+    case "firstName":
+      if (!value || value.length < 2) {
+        errorSpan.innerHTML = "First name must be at least 2 characters";
+        return false;
+      }
+      break;
+    case "password1":
+      if (!value || value.length < 8) {
+        errorSpan.innerHTML = "Password must be at least 8 characters";
+        return false;
+      }
+      break;
+    case "password2":
+      if (!value || value !== document.getElementById("password1").value) {
+        errorSpan.innerHTML = "Passwords do not match";
+        return false;
+      }
+      break;
+  }
+
+  // Field passed validation, return true
+  return true;
+}
+
+</script>
+</div>
+{% endblock %}

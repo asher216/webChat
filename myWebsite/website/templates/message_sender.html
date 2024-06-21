@@ -1,0 +1,929 @@
+{% extends "base.html" %} {% block title %}Chat App{% endblock %} {% block content
+%}
+
+
+<style>
+    @keyframes btn-pulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 0.3;
+        }
+        50% {
+            transform: scale(1.05);
+            opacity: 1;
+        }
+    }
+
+
+    /* Apply a different animation to the stop record button, or use the same */
+    #stop-record-btn {
+        /* Uncomment the line below if you want the stop button to pulse differently or at all */
+        animation: btn-pulse 2s infinite ease-in-out;
+    }
+
+    .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    
+    50% { transform: scale(1.02); }
+    
+    100% { transform: scale(1); }
+  }
+
+  
+
+  .stop-record-btn {
+    animation: pulse 2s infinite;
+  }
+
+  .message-txt-container {
+    max-height: 250px; /* Adjust height as per requirement */
+    overflow: hidden; /* This will hide any content that overflows the container */
+    transition: max-height 0.5s ease-in-out;
+    position: relative; /* Ensure proper positioning of "show more" button */
+  }
+  .message-txt-container   .show-more-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background-color: rgba(255, 255, 255, 0.5); /* Eye-catching button color */
+    color: black;
+    border: 1px solid #000000;
+    padding: 3px 7px;
+    cursor: context-menu;
+    display: none;
+    border-radius: 7px; /* More pronounced rounded corners */
+    background-image: linear-gradient(to bottom, rgba(68, 68, 68, 0.8), rgba(68, 68, 68, 0.6));
+    font-size: 14px; /* appropriate text size */
+    font-weight: bold; /* makes it more prominent */
+    text-transform: uppercase; /* stylistic choice for better UX */
+    animation: pulse 1s infinite; /* Applying the pulse animation */
+  }
+  .message-txt-container .show-more-btn:hover {
+    background-image: linear-gradient(to bottom, rgba(95, 95, 95, 0.6), rgba(95, 95, 95, 0.4));
+  }
+  .message-txt-container.show-more {
+    max-height: 500px;
+  }
+  .message-txt-container.show-more .show-more-btn {
+    display: block; /* Show the button when "show more" is active */
+  }
+</style>
+
+<style>
+/* Initial hidden state */
+        #top-bar, #bottom-bar {
+            position: relative;
+        }
+
+        #top-bar {
+            height: 50px; /* final height */
+            transform: translateY(38vh); /* start position in the center */
+            opacity: 1;
+        }
+
+        #bottom-bar {
+            height: 60px; /* final height */
+            transform: translateY(-38vh); /* start position in the center */
+            opacity: 1;
+        }
+
+        #message-list {
+            opacity: 0; /* initially hidden */
+        }
+
+        /* Keyframe animations */
+        @keyframes expandTop {
+            from {
+                transform: translateY(38vh); /* start position in the center */
+                opacity: 1;
+            }
+            to {
+                transform: translateY(0); /* final position */
+                opacity: 1;
+            }
+        }
+
+        @keyframes expandBottom {
+            from {
+                transform: translateY(-38vh); /* start position in the center */
+                opacity: 1;
+            }
+            to {
+                transform: translateY(0); /* final position */
+                opacity: 1;
+            }
+        }
+
+        @keyframes revealMessages {
+            from {
+                opacity: 0; /* initially hidden */
+            }
+            to {
+                opacity: 1; /* fully visible */
+            }
+            
+        }
+
+        /* Animation classes */
+        .animate-top {
+            animation: expandTop 0.3s forwards ease-in;
+        }
+
+        .animate-bottom {
+            animation: expandBottom 0.3s forwards ease-in;
+        }
+
+        .animate-messages {
+            animation: revealMessages 0.2s forwards;
+            animation-delay: 0.3s; /* delay to sync with bar animations */
+            
+        }
+
+        /* Additional styling */
+        #chat-container {
+            margin-left: 25%;
+            background-color: #222831;
+            position: relative;
+        }
+
+        #message-list {
+            padding: 1px 16px 12vh;
+            height: 85vh;
+            overflow: auto;
+            display: block;
+            background-color: #29323A;
+            color: white;
+            border-width: 0 1px 0 1px;
+        }
+
+        #top-bar {
+            display: flex;
+            flex-direction: row;
+            background-color: #0000002b;
+            border-radius: 10px 10px 0 0;
+            border: 1px solid white;
+        }
+
+        #bottom-bar {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            padding: 10px;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: #000000d0;
+            border-radius: 0 0 10px 10px;
+            border: 1px solid white;
+        }
+
+        /* Adjust form and other elements as needed */
+
+</style>
+
+<div id="chat-container" style="margin-left: 25%; background-color: #222831; position:relative; ">
+
+    <div id="top-bar" style="display: flex; flex-direction: row; background-color:#0000002b; border-radius:10px 10px 0 0 ; border:1px solid white;">
+        <h1 style="padding: 20px; color: white; flex: 1; line-height: 0.4; padding-bottom:5px;">{{ to_contact.name }}</h1>
+
+        <div style="display: flex; flex: 1; justify-content: flex-end;">
+            <input type="text" id="searchInput" placeholder="Search messages..." style="padding: 8px; width: 300px; color: white; background-color: #33373B; border: none; border-radius: 5px; margin-top:10px; margin-bottom:10px; margin-right:10px;" />
+        </div>
+    </div>
+    
+    
+    <ul class="list-group list-group-flush" id="message-list"  style="padding: 1px 16px 12vh; height: 85vh; overflow: auto; display: block; background-color: #29323A; color: white; border-width:0 1px 0 1px; scroll-behavior: auto;">
+        {% for message in user_messages %}
+        {% if message.sender_id == user.id %}
+        <li class="list-group-item" style="background-color: #33373B; border-radius: 10px; margin-bottom: 3px; width:fit-content; max-width:70%; max-height: 300px; float:left; clear:both">
+            {% if message.filename %}
+            <div style="width:300px; max-height:260px; overflow:hidden">
+            {% if message.filename.lower().endswith(".jpg") or message.filename.lower().endswith(".jpeg") or
+            message.filename.lower().endswith(".png") %}
+            <img class="chat-image lazy" src="/static/photo.png" data-src="/{{message.filename}}" style="
+                  width: 300px;
+                  cursor: pointer;
+                  box-shadow: 0px 0px 50px 15px #33373B;
+                " onclick="openFullscreen(this.src)" />
+            {% elif message.filename.lower().endswith(".mp4") %}
+            <img src="/static/play.png" style="height:20%; width:auto; position: absolute; top:40%; left:40%; z-index:1; pointer-events: none;"/>
+            <video class="chat-video lazy" src="/static/video.mp4" data-src="/{{message.filename}}" style="
+                  width: 300px;
+                  cursor: pointer;
+                  box-shadow: 0px 0px 50px 15px #33373B;
+                  position:relative;
+                " onclick="openFullscreen(this.src)"></video>
+
+            {% elif message.filename.lower().endswith(".mp3") or message.filename.lower().endswith(".aac") or
+            message.filename.lower().endswith(".wav") or message.filename.lower().endswith(".m4a") %}
+            <audio class="chat-audio lazy" controls preload data-src="/{{message.filename}}" style="
+                  width: 300px;
+                  cursor: pointer;
+                  box-shadow: 0px 0px 50px 15px #33373B;
+                " onclick="openFullscreen(this.src)"></audio>
+            
+            {% else %}
+                <a href="/{{message.filename}}" download="{{message.filename}}" style=" overflow-wrap: break-word; color:white; text-decoration: none;"><div style="background-color:#0000003e; border-radius: 10px; margin-bottom:10px; padding: 10px;">{{message.filename}}<span style="padding-left: 5px;"><img src="/static/download.png" style="width:20px ; height: auto" /></span></div></a>
+
+            {% endif %}
+            </div>
+            {% endif %}
+
+
+            <div class="message-txt-container">
+                <div class="message-txt" style="overflow-wrap: break-word;">{{ message.data }}</div>
+                <div class="show-more-btn" onclick="toggleShowMore(this)">... Show more</div>
+            </div>
+
+            <span aria-hidden="true" style="float: right; font-size:small;">{{ message.date }}</span>
+            
+            
+        </li>
+        {% else %}
+        <li class="list-group-item" style="background-color: #454A4D; color: white; border-radius: 10px; margin-bottom: 3px; margin-top: 2px; width:fit-content; max-width:70%; float:right; clear:both">
+            
+            {% if message.filename %}
+            <div style="width:300px; max-height:260px; overflow:hidden">
+            {% if message.filename.lower().endswith(".jpg") or message.filename.lower().endswith(".jpeg") or
+            message.filename.lower().endswith(".png") %}
+            <img class="chat-image lazy" src="/static/photo.png" data-src="/{{message.filename}}" style="
+                  width: 300px;
+                  cursor: pointer;
+                  box-shadow: 0px 0px 50px 15px #33373B;
+                " onclick="openFullscreen(this.src)" />
+            {% elif message.filename.lower().endswith(".mp4") %}
+            <img src="/static/play.png" style="height:20%; width:auto; position: absolute; top:40%; left:40%; z-index:1; pointer-events: none;"/>
+            <video class="chat-video lazy" src="/static/video.mp4" data-src="/{{message.filename}}" style="
+                  width: 300px;
+                  cursor: pointer;
+                  box-shadow: 0px 0px 50px 15px #33373B;
+                  position:relative;
+                " onclick="openFullscreen(this.src)"></video>
+
+            {% elif message.filename.lower().endswith(".mp3") or message.filename.lower().endswith(".aac") or
+            message.filename.lower().endswith(".wav") or message.filename.lower().endswith(".m4a") %}
+            <audio class="chat-audio lazy" controls preload data-src="/{{message.filename}}" style="
+                  width: 300px;
+                  cursor: pointer;
+                  box-shadow: 0px 0px 50px 15px #33373B;
+                " onclick="openFullscreen(this.src)"></audio>
+            
+            {% else %}
+                <div style="background-color:#0000003e; border-radius: 10px; margin-bottom:10px; padding: 10px;"><a href="/{{message.filename}}" download="{{message.filename}}" style=" overflow-wrap: break-word; color:white; text-decoration: none;">{{message.filename}}<span style="padding-left: 5px;"><img src="/static/download.png" style="width:20px ; height: auto" /></span></a></div>
+
+            {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="message-txt-container">
+                <div class="message-txt" style="overflow-wrap: break-word;">{{ message.data }}</div>
+                <div class="show-more-btn" onclick="toggleShowMore(this)">... Show more</div>
+            </div>
+
+            <span aria-hidden="true" style="float: right; font-size:small;">{{ message.date }}</span>
+        </li>
+        {% endif %}
+        {% endfor %}
+        
+    </ul>
+
+
+    <form id="bottom-bar" method="POST" enctype="multipart/form-data" data-recipient-id="{{ id_num }}"
+        style="display: flex; flex-direction: row; align-items: center; padding: 10px; position:absolute; bottom:0; width:100%; background-color:#000000d0; border-radius: 0 0 10px 10px; border: 1px solid white">
+
+        <div id="filename-container" style="display: none;">
+            <p id="filename" style=" color: white; overflow:hidden; width:180px; text-overflow: ellipsis; "></p>
+            <button type="button" id="delete-file-btn" onclick="deleteFile()"
+                style="align-items: center; justify-content: center; background-color:transparent; border: none;">
+                    <img src="/static/XIcon.png" style="width:20px ; height: auto" />
+                </button>
+        </div>
+
+        <div style="display: inline-block">
+
+            <textarea name="message" id="message" class="form-control" autofocus cols="60" rows="1"
+                placeholder="Type a message" style="
+
+            
+            resize: none;
+            min-height: 3rem;
+            padding: 5px;
+            color: white;
+            background-color: black;
+            flex: 1;
+            max-height: 8rem;
+            bottom: 0;"></textarea>
+
+        </div>
+
+        <div style="display: flex; height:48px">
+
+            <button type="button" id="upload" class="btn btn-primary"
+                style="align-items: center; justify-content: center; background-color: transparent; border: none;">
+                <label for="upload-file" style="cursor: pointer; background-color: transparent;">
+                    <img src="/static/upload.png" style="height: 40px; width: auto; " />
+                    <input type="file" class="form-control-file" id="upload-file" name="upload-file"
+                        style="display: none" />
+                </label>
+            </button>
+
+            <!--<input type="file" id="hidden-audio-file" style="display: none">-->
+
+            <button type="button" id="record-btn" class="btn btn-primary"
+                style="align-items: center; justify-content: center; background-color: transparent; border: none;">
+                <img src="/static/microphone.png" style="height: 40px; width: auto;" />
+            </button>
+
+            <button type="button" id="stop-record-btn" class="btn btn-primary" disabled
+                style="align-items: center; justify-content: center; background-color: transparent; border: none; display:none;">
+                <span id="stopwatch">00:00</span>
+                <img src="/static/stop.png" style="height: 40px; width: auto;" />
+            </button>
+
+            <button type="submit" id="sendMsg" class="btn btn-primary" disabled
+                style="display:none; align-items: center; justify-content: center; background-color: transparent; border: none;">
+                <img src="/static/Send.png" style="height: 40px; width: auto" />
+            </button>
+
+            <button type="button" id="ai-button" class="ai-button" disabled
+                style="align-items: center; justify-content: center; background-color: transparent; border: none; position: relative;">
+                <img src="/static/ai.png" style="height: 40px; width: auto" />
+                <span class="button-hint" style="position: absolute; top: 100%; left: 0;">Ctrl+Enter</span>
+            </button>
+
+        </div>
+
+        
+    </form>
+
+
+</div>
+
+<!-- Fullscreen Image Modal -->
+<div id="imageModal" style="
+    display: none;
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.868);
+  ">
+  <div id="fullscreenMedia" style="
+      max-width: 90%;
+      max-height: 90%;
+      margin: auto;
+      display: block;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    ">
+    <img id="fullscreenImage" style="display: none; max-width: 90%; max-height: 90vh; object-fit: contain; box-shadow: 0px 0px 50px 15px #33373B;" />
+    <video id="fullscreenVideo" controls autoplay style="display: none; max-width: 90%; max-height: 90vh; object-fit: contain; box-shadow: 0px 0px 50px 15px #33373B;" ></video>
+    </div>
+    <i style="
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      cursor: pointer;
+      width: 30px;
+      height: 30px;
+    " onclick="closeFullscreen()"><img src="/static/XIcon.png" style="width: 100%; height: 100%" /></i>
+    <a href="javascript:void(0);" style="
+      position: absolute;
+      top: 50%;
+      left: 20px;
+      font-size: 30px;
+      color: white;
+      cursor: pointer;
+      z-index: 1060;
+    " onclick="navigateImage(-1)">&#10094;</a>
+    <a href="javascript:void(0);" style="
+      position: absolute;
+      top: 50%;
+      right: 20px;
+      font-size: 30px;
+      color: white;
+      cursor: pointer;
+      z-index: 1060;
+    " onclick="navigateImage(1)">&#10095;</a>
+</div>
+
+
+
+<style>
+  /* Style the tooltip */
+  .button-hint {
+    visibility: hidden;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #000000;
+    color: rgb(255, 255, 255);
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    width: 80px; /* Adjust width as needed */
+    box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+  }
+
+  /* Show the tooltip on hover */
+  .ai-button:hover .button-hint {
+    visibility: visible;
+  }
+</style>
+
+
+
+
+<script src="/static/recorder.js"></script>
+
+
+<script>
+
+
+    document.getElementById('bottom-bar').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        let form = document.getElementById('bottom-bar');
+        let formData = new FormData(form);
+
+        fetch(`/send-msg/{{to_contact.contact_id}}`, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => {
+            if (response.ok) {
+                document.getElementById('bottom-bar').reset();
+
+                return response.json();
+            } else {
+                throw new Error('Message sending failed.');
+            }
+        })
+        .then(() => {
+            return fetch(`/get-new-messages/{{to_contact.contact_id}}`);
+        })
+        .then(response => response.json())
+        .then(data => {
+            data.messages.forEach(message => {
+                appendMessageToChat(message);
+            });
+            let messageList = document.getElementById('message-list');
+            messageList.scrollTo({
+                top: messageList.scrollHeight,
+                behavior: 'smooth'
+            });
+            deleteFile();
+        })
+        .catch(error => console.error('Error: ', error));
+    });
+
+
+    const list = document.getElementById('message-list');
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const image = entry.target;
+                image.src = image.dataset.src;
+                image.classList.remove('lazy');
+                observer.unobserve(image); // Unobserve after loading
+            }
+        });
+    }, { threshold: 0.1 }); // Observe when 10% of element is visible
+
+    const medias = list.querySelectorAll('.lazy');
+    medias.forEach(media => observer.observe(media));
+
+    var debounceTimeout;
+    function debounceSearch() {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(searchMessages, 500); // Adjust delay as needed
+    }
+    
+    // Function to search messages
+    function searchMessages() {
+        // Get the search query from the input field
+        var searchQuery = document.getElementById("searchInput").value.trim().toLowerCase();
+        
+        // Get all message containers
+        var messageContainers = document.querySelectorAll('.message-txt-container');
+        
+        // Loop through each message container
+        messageContainers.forEach(function(container) {
+            // Get the message text from the container
+            var messageText = container.querySelector('.message-txt').textContent.toLowerCase();
+            
+            // Check if the message text contains the search query
+            if (messageText.includes(searchQuery)) {
+                var regex = new RegExp('(' + searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig');
+                var highlightedText = messageText.replace(regex, '<span style="background-color: black;">$1</span>');
+                    
+                // Update the message text with highlighted text
+                container.querySelector('.message-txt').innerHTML = highlightedText;
+                // Show the message container if it matches the search query
+                container.parentElement.style.display = 'block';
+            } else {
+                // Hide the message container if it does not match the search query
+                container.parentElement.style.display = 'none';
+            }
+        });
+        var messageList = document.getElementById("message-list");
+        messageList.scrollTop = messageList.scrollHeight;
+    }
+
+    searchInput.addEventListener('input', debounceSearch);
+
+
+
+    window.addEventListener('DOMContentLoaded', function() {
+        var containers = document.querySelectorAll('.message-txt-container');
+        containers.forEach(function(container) {
+            var content = container.querySelector('.message-txt');
+            var showMoreBtn = container.querySelector('.show-more-btn');
+            if (content.scrollHeight > 250) {
+                showMoreBtn.style.display = 'block';
+            }
+        });
+    });
+
+    function toggleShowMore(button) {
+        var container = button.parentElement;
+        container.classList.toggle('show-more');
+        if (container.classList.contains('show-more')) {
+            button.textContent = 'Show less';
+            container.parentElement.style.maxHeight = "fit-content";
+            container.style.maxHeight = container.scrollHeight + 80 + "px"; // +10 for a little buffer
+            
+        } else {
+            button.textContent = 'Show more';
+            setTimeout(function() {
+                container.parentElement.style.maxHeight = "300px";
+            }, 500);
+            container.style.maxHeight = "250px"
+            
+        }
+    }
+
+
+
+
+    function checkForNewMessages() {
+    setInterval(function() {
+        // Make an AJAX request to the server to fetch new messages
+        fetch(`/get-new-messages/{{to_contact.contact_id}}`)
+            .then(response => response.json())
+            .then(data => {
+                // Update the UI with new messages
+                data.messages.forEach(message => {
+                    const messageList = document.getElementById("message-list");
+                    const scrollHeight = messageList.scrollHeight;
+                    const clientHeight = messageList.clientHeight;
+                    const scrollTop = messageList.scrollTop;
+                    if (scrollTop + clientHeight >= scrollHeight - 1){
+                        appendMessageToChat(message);
+                        messageList.scrollTo({
+                            top: messageList.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                    }
+                    else{
+                        appendMessageToChat(message);
+                    }
+                    // Add the new message to the chat interface
+                    
+                    
+                });
+            })
+        .catch(error => console.error('Error fetching new messages:', error));
+        }, 4000); // Check for new messages every 5 seconds (adjust as needed)
+    }
+
+    // Function to append a new message to the chat interface
+    function appendMessageToChat(message) {
+        
+
+        const messageList = document.getElementById("message-list");
+        const currentUser = message.sender_id === {{user.id}};// Assuming you have a variable for the current user ID
+
+        const listItem = document.createElement("li");
+        listItem.classList.add("list-group-item");
+        listItem.style.backgroundColor = currentUser ? "#33373B" : "#454A4D";
+        listItem.style.color = "white";
+        listItem.style.borderRadius = "10px";
+        listItem.style.marginBottom = "3px";
+        listItem.style.marginTop = currentUser ? "2px" : "0px";
+        listItem.style.width = "fit-content";
+        listItem.style.maxWidth = "70%";
+        listItem.style.float = currentUser ? "left" : "right";
+        listItem.style.clear = "both";
+
+
+        // Create message content
+        let content = "";
+        if (message.filename) {
+            if (message.filename.toLowerCase().endsWith(".jpg") || message.filename.toLowerCase().endsWith(".jpeg") || message.filename.toLowerCase().endsWith(".png")) {
+                content += `<img class="chat-image" src="/${message.filename}" style="width: 300px; cursor: pointer; box-shadow: 0px 0px 50px 15px #33373B;" onclick="openFullscreen(this.src)" />`;
+            } else if (message.filename.toLowerCase().endsWith(".mp4")) {
+                content += `<video class="chat-video" controls src="/${message.filename}" style="width: 300px; cursor: pointer; box-shadow: 0px 0px 50px 15px #33373B;" onclick="openFullscreen(this.src)"></video>`;
+            } else if (message.filename.toLowerCase().endsWith(".mp3") || message.filename.toLowerCase().endsWith(".aac") || message.filename.toLowerCase().endsWith(".wav") || message.filename.toLowerCase().endsWith(".m4a")) {
+                content += `<audio class="chat-audio" controls src="/${message.filename}" style="width: 300px; cursor: pointer; box-shadow: 0px 0px 50px 15px #33373B;" onclick="openFullscreen(this.src)"></audio>`;
+            } else {
+                content += `<div style="background-color:#0000003e; border-radius: 10px; margin-bottom:10px; padding: 10px;"><a href="/${message.filename}" download="${message.filename}" style=" overflow-wrap: break-word; color:white; text-decoration: none;">${message.filename}<span style="padding-left: 5px;"><img src="/static/download.png" style="width:20px ; height: auto" /></span></a></div>`;
+            }
+        }
+        
+
+        // **Create message content container** (New)
+        
+        content += `<div class="message-txt-container">
+                        <div class="message-txt" style="overflow-wrap: break-word;">${message.data}</div>
+                        <div class="show-more-btn" onclick="toggleShowMore(this)">Show more</div>
+                    </div>
+                    <span aria-hidden="true" style="float: right; font-size:small;">${message.date}</span> `       
+        
+        listItem.innerHTML = content;
+
+        messageList.appendChild(listItem);
+    }
+
+    
+
+
+
+
+
+
+
+
+    window.onload = function () {
+        
+        var messageList = document.getElementById("message-list");
+        messageList.scrollTop = messageList.scrollHeight;
+        checkForNewMessages();
+
+        document.getElementById('top-bar').classList.add('animate-top');
+        document.getElementById('bottom-bar').classList.add('animate-bottom');
+        document.getElementById('message-list').classList.add('animate-messages');
+        document.getElementById('message-list').style.scrollBehavior = "smooth";
+    };
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            closeFullscreen();
+        }
+
+        if (event.key === "Enter" && !event.shiftKey && !event.ctrlKey) {
+            document.getElementById("sendMsg").click();
+            event.preventDefault();
+        }
+
+        if (event.key ==="Enter" && event.ctrlKey) {
+            document.getElementById("ai-button").click();
+            event.preventDefault();
+        }
+    });
+
+    document.getElementById("message").addEventListener("input", function () {
+        this.style.height = "auto";
+        this.style.height = (this.scrollHeight) + "px";
+    });
+
+
+    document.getElementById("message").oninput = function () {
+        if (message.value.trim().length === 0) {
+            if (document.getElementById("upload-file").files.length <= 0){
+                document.getElementById("sendMsg").style.display = 'none';
+                document.getElementById("record-btn").style.display = 'block';
+                document.getElementById("sendMsg").disabled = true;
+                document.getElementById("ai-button").disabled = true;
+            }
+        }
+        else {
+            document.getElementById("sendMsg").style.display = 'block';
+            document.getElementById("record-btn").style.display = 'none';
+            document.getElementById("sendMsg").disabled = false;
+            document.getElementById("ai-button").disabled = false;
+        }
+    }
+
+
+    document.getElementById("upload-file").addEventListener('change', function () {
+            const selectedFile = this.files[0];
+            if (selectedFile.size > 100 * 1024 * 1024) {
+                alert("File size exceeds the limit of 40MB. Please choose a smaller file.");
+                this.value = ""; // Clear the file input to prevent upload
+                return;
+            }
+            document.getElementById("sendMsg").disabled = false;
+            document.getElementById("sendMsg").style.display = 'block';
+            document.getElementById("record-btn").style.display = 'none';
+            var file_name = document.getElementById("upload-file").files[0].name;
+            document.getElementById("filename").innerHTML = "Selected File: " + file_name;
+            document.getElementById("filename-container").style.display = 'flex';
+    });
+
+    function deleteFile() {
+        var fileInput = document.getElementById('upload-file');
+        fileInput.value = ''; // Reset the value to clear the file input
+        document.getElementById('filename-container').style.display = 'none';
+        document.getElementById("sendMsg").disabled = true;
+        document.getElementById("sendMsg").style.display = 'none';
+        document.getElementById("record-btn").style.display = 'block';
+    }
+
+
+    document.getElementById("ai-button").addEventListener("click", function() {
+        var message = document.getElementById("message").value;
+        document.getElementById("message").value = "Loading...";
+        document.getElementById("message").setAttribute('readonly', true);
+        // Send AJAX request to Flask backend
+        fetch('/ai-process', {
+            method: 'POST',
+            body: JSON.stringify({ message: message }),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Update UI with AI response
+            
+            document.getElementById("message").value = data.ai_response;
+            document.getElementById("message").removeAttribute('readonly');
+            document.getElementById("message").style.height = "auto";
+            document.getElementById("message").style.height = (document.getElementById("message").scrollHeight) + "px"; // Set height to scroll height
+        })
+        .catch(error => console.error('Error:', error));
+    });
+
+
+    //TODO:
+    document
+        .getElementById("imageModal")
+        .addEventListener("click", backgroundClickClose);
+
+
+
+
+
+    var currentImageIndex = 0;
+    var images = document.querySelectorAll(".chat-image, .chat-video");
+
+    
+
+    function openFullscreen(src) {
+        currentImageIndex = Array.from(images).findIndex((image) =>
+            image.src.includes(src)
+        );
+        setModalImage(currentImageIndex);
+        document.getElementById("imageModal").style.display = "block";
+    }
+
+    function closeFullscreen() {
+        document.getElementById("imageModal").style.display = "none";
+    }
+
+    function navigateImage(direction) {
+        currentImageIndex += direction;
+        if (currentImageIndex >= images.length) {
+            currentImageIndex = 0;
+        } else if (currentImageIndex < 0) {
+            currentImageIndex = images.length - 1;
+        }
+        setModalImage(currentImageIndex);
+    }
+
+    function setModalImage(index) {
+        const mediaElement = images[index];
+        if (mediaElement.tagName.toLowerCase() === "img") {
+            document.getElementById("fullscreenImage").src = mediaElement.src;
+            document.getElementById("fullscreenVideo").style.display = "none"; // Hide video
+            document.getElementById("fullscreenImage").style.display = "block";
+        } else if (mediaElement.tagName.toLowerCase() === "video") {
+            document.getElementById("fullscreenVideo").src = mediaElement.src;
+            document.getElementById("fullscreenImage").style.display = "none";
+            document.getElementById("fullscreenVideo").style.display = "block"; // Hide image
+        }
+    }
+
+    function backgroundClickClose(event) {
+        if (event.target === document.getElementById("imageModal")) {
+            closeFullscreen();
+        }
+    }
+
+
+
+
+
+    //audio recording handling:
+
+
+    let stopwatchInterval;
+    let stopwatchStartTime;
+
+
+    function startStopwatch() {
+        stopwatchStartTime = Date.now();
+        stopwatchInterval = setInterval(updateStopwatchDisplay, 1000);
+    }
+
+    function updateStopwatchDisplay() {
+        const elapsedTime = Date.now() - stopwatchStartTime;
+        const formattedTime = formatTime(elapsedTime);
+        document.getElementById("stopwatch").textContent = formattedTime;
+    }
+
+    function formatTime(milliseconds) {
+        const seconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${padWithZero(minutes)}:${padWithZero(remainingSeconds)}`;
+    }
+
+    function padWithZero(number) {
+        return number < 10 ? '0' + number : number;
+    }
+
+    function stopStopwatch() {
+        clearInterval(stopwatchInterval);
+    }
+
+    document.getElementById("record-btn").addEventListener("click", function () {
+
+        
+        
+        document.getElementById("sendMsg").style.display = 'block';
+        document.getElementById("record-btn").style.display = 'none';
+        document.getElementById("stop-record-btn").style.display = 'block';
+        document.getElementById("stop-record-btn").disabled = false;
+        
+
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(function (stream) {
+                var recorder = new MediaRecorder(stream);
+                var audioChunks = [];
+                startStopwatch();
+
+                recorder.addEventListener('dataavailable', function (event) {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                });
+
+                recorder.addEventListener('stop', function () {
+
+                    let length = document.getElementById("stopwatch").innerHTML;
+                    stopStopwatch();
+                    let fileTempName = "Recorded Audio(" + length + ")"
+
+                    var audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+
+
+                    const AudioFile = document.getElementById('upload-file');
+
+                    // Create an array containing the audio file
+                    const fileList = [new File([audioBlob], 'recorded_audio.wav', { type: 'audio/wav' })];
+
+                    // Create a new FileList object
+                    const newFileList = new DataTransfer();
+                    fileList.forEach(file => {
+                        newFileList.items.add(file);
+                    });
+
+                    // Assign the new FileList to the files property of the input element
+                    AudioFile.files = newFileList.files;
+
+
+                    document.getElementById("filename-container").style.display = 'flex';
+                    document.getElementById("filename").innerHTML = fileTempName;
+                    document.getElementById("sendMsg").disabled = false;
+                    document.getElementById("stop-record-btn").style.display = 'none';
+                    document.getElementById("stop-record-btn").disabled = true;
+                });
+
+                recorder.start();
+
+                document.getElementById("stop-record-btn").addEventListener("click", function (){
+                    recorder.stop();
+                });
+            })
+            .catch(function (err) {
+                console.error("Error accessing microphone:", err);
+            });
+    });
+
+
+
+</script>
+
+{% endblock %}
